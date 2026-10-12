@@ -1,0 +1,27 @@
+services:
+  antigravity:
+    build:
+      context: .
+      dockerfile: deploy/antigravity/Dockerfile
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1g
+    cpus: 1
+    pids_limit: 192
+    environment:
+      OPENSI_SERVER: https://opensi.23-252-124-21.sslip.io
+    volumes:
+      - antigravity-state:/state
+      - antigravity-projects:/workspace
+    tmpfs:
+      - /tmp:rw,nosuid,size=192m
+      - /run/opensi:rw,nosuid,noexec,size=16m,uid=1000,gid=1000,mode=0700
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+volumes:
+  antigravity-state:
+  antigravity-projects:

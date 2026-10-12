@@ -1,0 +1,6 @@
+{$OPENSI_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy opensi:4580 {
+		flush_interval -1
+	}
+}

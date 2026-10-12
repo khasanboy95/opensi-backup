@@ -1,0 +1,16 @@
+node_modules/
+dist/
+data/
+.env
+.env.*
+!.env.example
+!.env.production.example
+.connector/
+*.log
+tests/.artifacts/
+releases/
+.codex/
+.tools/
+tmp/
+evidence/
+qa-output/

@@ -1,0 +1,18 @@
+services:
+  opensi:
+    build: .
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 4580
+      DATA_DIR: /app/data
+      LOCAL_DEV_AUTH: "false"
+      OPENSI_DOCKER_ENABLED: "false"
+    ports:
+      - "127.0.0.1:4580:4580"
+    volumes:
+      - opensi-data:/app/data
+volumes:
+  opensi-data:

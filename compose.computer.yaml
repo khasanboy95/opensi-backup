@@ -1,0 +1,30 @@
+services:
+  opensi:
+    environment:
+      OPENSI_COMPUTER_URL: http://computer:4595
+    networks: [opensi-computer]
+  computer:
+    build:
+      context: .
+      dockerfile: deploy/computer/Dockerfile
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 900m
+    cpus: 1.0
+    pids_limit: 384
+    shm_size: 128m
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    environment:
+      OPENSI_COMPUTER_TOKEN: ${OPENSI_COMPUTER_TOKEN:?Computer token required}
+      OPENSI_COMPUTER_GATEWAY: http://opensi:4580/api/computer-gateway
+    networks: [opensi-computer]
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+networks:
+  opensi-computer:
+    internal: true

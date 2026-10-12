@@ -1,0 +1,35 @@
+services:
+  opensi:
+    environment:
+      OPENSI_RUNNER_URL: http://runner:4590
+      OPENSI_RUNNER_TOKEN: ${OPENSI_RUNNER_TOKEN:?Runner token required}
+    networks:
+      - opensi-execution
+  runner:
+    build:
+      context: .
+      dockerfile: deploy/runner/Dockerfile
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.5
+    environment:
+      OPENSI_RUNNER_TOKEN: ${OPENSI_RUNNER_TOKEN:?Runner token required}
+      OPENSI_WORKSPACES_HOST: ${OPENSI_WORKSPACES_HOST:?Host workspace path required}
+      OPENSI_RUNTIME_IMAGE: opensi-runtime:0.3.0
+      OPENSI_PACKAGE_NETWORK: ${COMPOSE_PROJECT_NAME:-opensi}_opensi-execution
+      OPENSI_DOCUMENT_IMAGE: opensi-documents:0.1.0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${OPENSI_WORKSPACES_HOST}:/workspaces:ro
+    networks: [opensi-execution, webhook-egress]
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+networks:
+  opensi-execution:
+    internal: true
+  webhook-egress: {}

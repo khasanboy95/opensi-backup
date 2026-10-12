@@ -1,0 +1,68 @@
+# Apply with: docker compose --env-file .env.production -f compose.yaml -f compose.vps.yaml up -d --build
+services:
+  opensi:
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 768m
+    cpus: 1.5
+    stop_grace_period: 30s
+    environment:
+      # Caddy is the only public entry point; the existing backend binding is loopback only.
+      OPENSI_TRUST_PROXY: "1"
+      # Google Flow billing policy: never charge Gemini API for video on this deployment.
+      OPENSI_VIDEO_API_ENABLED: "false"
+    networks:
+      - opensi-backend
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4580/api/health',{signal:AbortSignal.timeout(3000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      opensi:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      OPENSI_DOMAIN: ${OPENSI_DOMAIN:?Set OPENSI_DOMAIN in .env.production}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - opensi-caddy-data:/data
+      - opensi-caddy-config:/config
+    networks:
+      - opensi-backend
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 192m
+    cpus: 0.5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  opensi-backend:
+volumes:
+  opensi-caddy-data:
+  opensi-caddy-config:
